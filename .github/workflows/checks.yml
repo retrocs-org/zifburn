@@ -1,0 +1,26 @@
+name: Build and test
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit tests
+        run: make test
+      - name: Build universal app
+        run: make universal
+      - name: Verify signature and architectures
+        run: |
+          codesign --verify --deep --strict build/ZIFburn.app
+          lipo build/ZIFburn.app/Contents/MacOS/ZIFburn -verify_arch arm64
+          lipo build/ZIFburn.app/Contents/MacOS/ZIFburn -verify_arch x86_64
+      - name: Check source archive
+        run: |
+          make dist
+          tar -tzf ../zifburn-$(cat VERSION)-source.tar.gz
+  release-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Offline release automation tests
+        run: make release-tests

@@ -1,0 +1,23 @@
+{
+  "github": "https://github.com/your-org/zifburn",
+  "github_git": "git@github.com:your-org/zifburn.git",
+  "gitlab": "https://gitlab.example.com/your-group/zifburn",
+  "gitlab_git": "git@gitlab.example.com:your-group/zifburn.git",
+  "notary_profile": "zifburn",
+  "env": {
+    "SIGN_IDENTITY": "Developer ID Application: Your Name (TEAMID)",
+    "ZIFBURN_RELEASE_PYTHON": "/absolute/path/to/python",
+    "PHP": "/absolute/path/to/php"
+  },
+  "source_branch": "",
+  "credentials": {
+    "github": {
+      "provider": "env",
+      "variable": "GITHUB_TOKEN"
+    },
+    "gitlab": {
+      "provider": "env",
+      "variable": "GITLAB_TOKEN"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- ZIFburn app icon: flat, retro. Palette: cream, ink, 80s sunset stripes. -->
+  <defs>
+    <clipPath id="body"><rect x="100" y="100" width="824" height="824" rx="186"/></clipPath>
+    <filter id="drop" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity="0.30"/>
+    </filter>
+  </defs>
+
+  <!-- body: beige 80s computer plastic -->
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="#EFE4CC" filter="url(#drop)"/>
+
+  <g clip-path="url(#body)">
+    <!-- sunset stripes -->
+    <rect x="100" y="400" width="824" height="56" fill="#F6C143"/>
+    <rect x="100" y="456" width="824" height="56" fill="#F28C28"/>
+    <rect x="100" y="512" width="824" height="56" fill="#E8542F"/>
+    <rect x="100" y="568" width="824" height="56" fill="#B8343A"/>
+  </g>
+
+  <!-- pins -->
+  <g fill="#E9E1CF" stroke="#23252C" stroke-width="10" stroke-linejoin="round">
+    <rect x="278" y="318" width="36" height="60" rx="6"/>
+    <rect x="278" y="646" width="36" height="60" rx="6"/>
+    <rect x="350" y="318" width="36" height="60" rx="6"/>
+    <rect x="350" y="646" width="36" height="60" rx="6"/>
+    <rect x="422" y="318" width="36" height="60" rx="6"/>
+    <rect x="422" y="646" width="36" height="60" rx="6"/>
+    <rect x="494" y="318" width="36" height="60" rx="6"/>
+    <rect x="494" y="646" width="36" height="60" rx="6"/>
+    <rect x="566" y="318" width="36" height="60" rx="6"/>
+    <rect x="566" y="646" width="36" height="60" rx="6"/>
+    <rect x="638" y="318" width="36" height="60" rx="6"/>
+    <rect x="638" y="646" width="36" height="60" rx="6"/>
+    <rect x="710" y="318" width="36" height="60" rx="6"/>
+    <rect x="710" y="646" width="36" height="60" rx="6"/>
+  </g>
+
+  <!-- chip body -->
+  <rect x="236" y="362" width="552" height="300" rx="18" fill="#23252C"/>
+  <!-- notch -->
+  <path d="M236 482 a30 30 0 0 1 0 60 Z" fill="#EFE4CC"/>
+
+  <!-- quartz window, flat concentric "burn" -->
+  <circle cx="512" cy="512" r="104" fill="#8C877C"/>
+  <circle cx="512" cy="512" r="84" fill="#B8343A"/>
+  <circle cx="512" cy="512" r="64" fill="#F28C28"/>
+  <circle cx="512" cy="512" r="40" fill="#F6C143"/>
+  <circle cx="512" cy="512" r="16" fill="#FFF6DC"/>
+</svg>

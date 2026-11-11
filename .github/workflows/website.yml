@@ -1,0 +1,19 @@
+name: Website checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PHP CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y php-cli
+      - name: Validate and package PHP website
+        run: make website-package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zifburn-php-website
+          path: build/zifburn-website.tar.gz

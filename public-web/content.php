@@ -4,10 +4,11 @@ declare(strict_types=1);
 return [
     'version' => '0.1',
     'navigation' => [
-        ['section' => 'workflow', 'label' => 'Workflow'],
         ['section' => 'screenshots', 'label' => 'Screenshots'],
-        ['section' => 'updates', 'label' => 'What’s new'],
-        ['section' => 'get.php', 'label' => 'Get ZIFburn'],
+        ['section' => 'workflow', 'label' => 'Workflow'],
+        ['section' => 'build', 'label' => 'Build from source'],
+        ['section' => 'support', 'label' => 'Support'],
+        ['section' => 'get', 'label' => 'Get ZIFburn', 'button' => true],
     ],
     'screenshots' => [
         [

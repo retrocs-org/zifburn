@@ -2,7 +2,7 @@
 
 A PHP website with feature descriptions, application screenshots and build
 instructions. PHP renders the navigation, version, screenshot gallery and FAQs
-from `content.php`. `get.php` lists the latest stable GitHub release automatically. No framework, database, Composer packages or JavaScript
+from `content.php`. The homepage’s Get ZIFburn section lists the latest stable GitHub release automatically. No framework, database, Composer packages or JavaScript
 build step is required.
 
 ## Requirements
@@ -51,7 +51,7 @@ it does not deploy it to GitHub Pages.
 
 ## Automatic downloads
 
-`get.php` reads the public GitHub latest-release API for `retrocs-org/zifburn`.
+The `#get` section reads the public GitHub latest-release API for `retrocs-org/zifburn`.
 Download and matching checksum links come from the returned release assets;
 future stable tags need no website edit. Drafts and prereleases are excluded.
 The release tag, date, source archive and release-notes links follow that release.
@@ -80,3 +80,11 @@ no programmer is connected. Screenshot links open full-size images.
 When refreshing screenshots, use example files from a neutral folder so local
 usernames and development workspace paths are not visible. Keep captions,
 alternative text and image dimensions consistent with each capture.
+
+## Page structure
+
+All visitor content is on `index.php`: workflow, screenshots, tools, Get ZIFburn,
+one Build from source section, and Support with an expandable FAQ. Navigation
+uses scrolling section links. The outlined Get ZIFburn menu button leads to
+`#get`. Changelog links point to GitHub releases. `get.php` redirects old download
+page links to `index.php#get`.

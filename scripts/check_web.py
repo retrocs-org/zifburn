@@ -26,7 +26,7 @@ if not shutil.which(php):
 for source in sorted(root.glob('*.php')):
     subprocess.run([php, '-l', str(source)], check=True, capture_output=True, text=True)
 parsers = {}
-for name in ('index.php', 'get.php'):
+for name in ('index.php',):
     render = subprocess.run(
         [php, '-d', 'display_errors=stderr', '-d', 'error_reporting=-1', str(root / name)],
         check=True, capture_output=True, text=True,
@@ -37,6 +37,11 @@ for name in ('index.php', 'get.php'):
     if name == 'index.php':
         assert f"VERSION {(root.parent / 'VERSION').read_text().strip()}" in render.stdout, 'Website version differs'
     parser = Check(); parser.feed(render.stdout); parsers[name] = parser
+    assert {'get', 'build', 'support'} <= parser.ids, 'Missing one-page sections'
+    assert not {'updates', 'start', 'questions'} & parser.ids, 'Obsolete sections remain'
+    assert render.stdout.count('>Build from source.</h2>') == 1, 'Build section must be unique'
+    assert 'class="nav-get"' in render.stdout and 'href="#get"' in render.stdout
+    assert 'get.php' not in render.stdout, 'Navigation must stay on the one-page site'
 for name, parser in parsers.items():
     for link in parser.links:
         url = urlsplit(link)

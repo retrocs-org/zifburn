@@ -65,7 +65,12 @@ printing secret output. Configuring a reference does not create its token field.
 GitHub needs repository Contents write access. GitLab needs API access and at
 least Developer project permissions; protected tags and project policies may
 require higher access. Git pushes use your ordinary SSH key or Git credential
-helper independently of the API token.
+helper independently of the API token. For GitHub App installation tokens,
+repository access is checked through the installation’s repository listing;
+user-style `permissions.push` flags are not used as App permission evidence.
+This read-only check does not prove Contents write permission. GitHub enforces
+that permission when creating a release or uploading an asset, and denied
+operations stop without automatic retry.
 
 Never put literal tokens into configuration, source, command-line arguments,
 notes or archives. Environment tokens can be supplied by CI secret injection or

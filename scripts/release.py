@@ -471,6 +471,32 @@ def load_receipt(path, manifest_path):
     return receipt
 
 
+def check_github_access(repo, project, api, token):
+    require(repo.get('full_name', '').lower() == project.lower(),
+            'GitHub repository identity differs from the configured destination')
+    if not token.startswith('ghs_'):
+        require(repo.get('permissions', {}).get('push') is True,
+                'GitHub user credential does not report repository write access')
+        return
+    # Installation tokens have no user role. User-style push/pull flags are
+    # not their Contents permission. Check installation access without writes;
+    # GitHub remains authoritative for write authorization on each operation.
+    page = 1
+    while True:
+        listing = api.request('GET', '/installation/repositories?per_page=100&page=' + str(page))
+        entries = listing.get('repositories')
+        require(isinstance(entries, list), 'Invalid GitHub installation repository response')
+        for entry in entries:
+            if entry.get('full_name', '').lower() == project.lower():
+                require(not repo.get('id') or entry.get('id') == repo['id'],
+                        'GitHub installation repository ID differs')
+                return
+        if len(entries) < 100:
+            break
+        page += 1
+    raise ValueError('GitHub App installation does not include the configured repository')
+
+
 def publish(services, confirmed=False, root=ROOT, config=None, tag=None, tag_message=None):
     require(confirmed, 'Review the manifest, then add --confirm-publish; no upload performed')
     path = root / 'outputs/release/manifest.json'
@@ -501,8 +527,7 @@ def publish(services, confirmed=False, root=ROOT, config=None, tag=None, tag_mes
         base, _ = release_paths(service, manifest)
         repo = api.request('GET', base)
         if service == 'github':
-            require(repo.get('full_name', '').lower() == project.lower() and repo.get('permissions', {}).get('push'),
-                    'GitHub repository identity or write access differs')
+            check_github_access(repo, project, api, token)
         else:
             permissions = repo.get('permissions', {})
             level = max((permissions.get(k) or {}).get('access_level', 0)

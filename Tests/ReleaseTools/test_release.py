@@ -591,5 +591,55 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(publish.call_args.kwargs,{'config':self.config,'tag':'0.1','tag_message':'Release 0.1'})
 
 
+    def test_github_installation_accepts_listed_repo_despite_false_user_flags(self):
+        from unittest.mock import Mock
+        api=Mock()
+        api.request.return_value={'repositories':[{'id':42,'full_name':'org/zifburn'}]}
+        release.check_github_access({'id':42,'full_name':'org/zifburn','permissions':{'push':False}},
+                                    'org/zifburn',api,'ghs_mock-installation')
+        api.request.assert_called_once_with('GET','/installation/repositories?per_page=100&page=1')
+
+    def test_github_installation_must_include_target(self):
+        from unittest.mock import Mock
+        api=Mock();api.request.return_value={'repositories':[]}
+        with self.assertRaisesRegex(ValueError,'does not include'):
+            release.check_github_access({'full_name':'org/zifburn'},'org/zifburn',api,'ghs_mock-installation')
+
+    def test_github_installation_identity_is_not_relaxed(self):
+        from unittest.mock import Mock
+        api=Mock()
+        with self.assertRaisesRegex(ValueError,'identity differs'):
+            release.check_github_access({'full_name':'other/repo'},'org/zifburn',api,'ghs_mock-installation')
+        api.request.assert_not_called()
+
+    def test_github_installation_id_must_match(self):
+        from unittest.mock import Mock
+        api=Mock();api.request.return_value={'repositories':[{'id':7,'full_name':'org/zifburn'}]}
+        with self.assertRaisesRegex(ValueError,'ID differs'):
+            release.check_github_access({'id':42,'full_name':'org/zifburn'},'org/zifburn',api,'ghs_mock-installation')
+
+    def test_github_user_token_still_requires_write_access(self):
+        from unittest.mock import Mock
+        api=Mock()
+        for permissions in ({'push':False},{}):
+            with self.assertRaisesRegex(ValueError,'does not report repository write'):
+                release.check_github_access({'full_name':'org/zifburn','permissions':permissions},
+                                            'org/zifburn',api,'github_pat_mock')
+        api.request.assert_not_called()
+
+    def test_github_installation_repository_listing_is_paginated(self):
+        from unittest.mock import Mock
+        api=Mock();api.request.side_effect=[{'repositories':[{'full_name':'other/repo'}]*100},
+                                           {'repositories':[{'full_name':'org/zifburn'}]}]
+        release.check_github_access({'full_name':'org/zifburn'},'org/zifburn',api,'ghs_mock-installation')
+        self.assertEqual(api.request.call_count,2)
+
+    def test_github_installation_lookup_failure_stops_preflight(self):
+        from unittest.mock import Mock
+        api=Mock();api.request.side_effect=ValueError('HTTP 403')
+        with self.assertRaisesRegex(ValueError,'HTTP 403'):
+            release.check_github_access({'full_name':'org/zifburn'},'org/zifburn',api,'ghs_mock-installation')
+
+
 if __name__ == '__main__':
     unittest.main()

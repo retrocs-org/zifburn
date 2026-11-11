@@ -2,7 +2,7 @@
 
 A PHP website with feature descriptions, application screenshots and build
 instructions. PHP renders the navigation, version, screenshot gallery and FAQs
-from `content.php`. No framework, database, Composer packages or JavaScript
+from `content.php`. `get.php` lists the latest stable GitHub release automatically. No framework, database, Composer packages or JavaScript
 build step is required.
 
 ## Requirements
@@ -34,7 +34,8 @@ answers. Edit `index.php` for page structure and feature sections, and
 
 Run `make website-package` to create `build/zifburn-website.tar.gz`. Extract it
 into your PHP host’s document root, preserving the `assets/` directory. The
-archive contains `index.php`, `content.php`, `style.css`, `LICENSE` and the image assets.
+archive contains `index.php`, `get.php`, `release-data.php`, `content.php`, `style.css`,
+`LICENSE` and the image assets.
 Configure the host to use `index.php` as its directory index and execute PHP
 files through the PHP runtime. Check the homepage and screenshot links after
 deployment. Keep the application source and signing credentials outside the
@@ -48,8 +49,27 @@ GitHub Pages serves static files and cannot run this PHP website. The Website
 checks workflow validates and packages the PHP site for upload to your host;
 it does not deploy it to GitHub Pages.
 
-After publishing a signed and notarized binary release, add its download and
-checksum links to the Get started section.
+## Automatic downloads
+
+`get.php` reads the public GitHub latest-release API for `retrocs-org/zifburn`.
+Download and matching checksum links come from the returned release assets;
+future stable tags need no website edit. Drafts and prereleases are excluded.
+The release tag, date, source archive and release-notes links follow that release.
+Only uploaded Mac universal ZIP assets from the same repository and tag are shown.
+
+Allow outbound HTTPS to `api.github.com`. PHP cURL is preferred; HTTPS streams
+with `allow_url_fopen` are supported as a fallback. No GitHub token is needed or
+stored on the web server. Public metadata is cached for five minutes in PHP’s
+system temporary directory, outside the document root. The web user should be
+able to write there. If caching is unavailable the lookup still works, but
+requests may reach GitHub’s unauthenticated rate limit sooner.
+
+On API/network failure, recent cached links are labelled as last confirmed for
+up to 24 hours; older data is discarded. Without cached data the page links to
+GitHub releases. A 404 clears cached release links. Deployments need no cron job
+or JavaScript. `ZIFBURN_RELEASE_OFFLINE=1` disables network lookups for offline
+checks; do not set it on the production server. `make website-check` exercises
+cache refresh, future tags, invalid responses and failures without networking.
 
 ## Screenshots
 

@@ -168,7 +168,7 @@ def verify_archives(root=ROOT):
         require(actual == expected, 'Source archive differs from source or build record')
     web = root / 'public-web'
     expected = {str(p.relative_to(web)): p.read_bytes()
-                for p in web.rglob('*') if p.is_file() and (p.name in ('index.php', 'content.php', 'style.css', 'LICENSE')
+                for p in web.rglob('*') if p.is_file() and (p.name in ('index.php', 'get.php', 'release-data.php', 'content.php', 'style.css', 'LICENSE')
                                                          or 'assets' in p.relative_to(web).parts)
                 and p.name != '.DS_Store' and not p.name.startswith('._')}
     with tarfile.open(folder / names(root)['website']) as archive:

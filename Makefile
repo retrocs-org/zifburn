@@ -86,7 +86,7 @@ website-preview:
 
 website-package: website-check
 	mkdir -p "$(BUILD)"
-	COPYFILE_DISABLE=1 tar --exclude=.DS_Store --exclude='._*' -czf "$(BUILD)/zifburn-website.tar.gz" -C public-web index.php content.php style.css LICENSE assets
+	COPYFILE_DISABLE=1 tar --exclude=.DS_Store --exclude='._*' -czf "$(BUILD)/zifburn-website.tar.gz" -C public-web index.php get.php release-data.php content.php style.css LICENSE assets
 
 .PHONY: release-plan release-check release-prepare release-tests
 release-plan:

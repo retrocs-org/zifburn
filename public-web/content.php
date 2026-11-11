@@ -7,7 +7,7 @@ return [
         ['section' => 'workflow', 'label' => 'Workflow'],
         ['section' => 'screenshots', 'label' => 'Screenshots'],
         ['section' => 'updates', 'label' => 'What’s new'],
-        ['section' => 'start', 'label' => 'Get started'],
+        ['section' => 'get.php', 'label' => 'Get ZIFburn'],
     ],
     'screenshots' => [
         [

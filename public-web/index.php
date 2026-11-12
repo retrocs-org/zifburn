@@ -48,10 +48,12 @@ function escape(string $value): string
 <div class="download-heading"><img src="assets/icon.png" alt="" width="80" height="80"><div><p class="eyebrow">UNIVERSAL MAC APP</p><h3>ZIFburn<?= $release ? ' ' . escape($release['tag']) : '' ?></h3><?php if ($release): ?><p>Published <?= escape(gmdate('j M Y', strtotime($release['published_at']))) ?></p><?php else: ?><p>Find the latest published release on GitHub.</p><?php endif; ?></div></div>
 <?php if ($state['status'] === 'stale'): ?><p class="download-notice" role="status">GitHub is temporarily unavailable. These are the last confirmed release links; a newer release may be available.</p><?php endif; ?>
 <?php if ($release && $release['downloads']): ?>
+<div class="download-options">
 <?php foreach ($release['downloads'] as $download): ?>
-<div class="download-action"><a class="button<?= $download['format'] === 'ZIP' ? ' button-secondary' : '' ?>" href="<?= escape($download['url']) ?>"><?= $download['format'] === 'DMG' ? 'Download for macOS' : 'Download ZIP' ?> <span aria-hidden="true">↓</span></a><span class="download-size"><?= escape($download['format']) ?> · <?= escape(number_format($download['size'] / 1048576, 1)) ?> MB</span><?php if ($download['checksum']): ?><a href="<?= escape($download['checksum']) ?>">SHA-256 checksum</a><?php endif; ?></div>
+<div class="download-action"><a class="button<?= $download['format'] === 'ZIP' ? ' button-secondary' : '' ?>" href="<?= escape($download['url']) ?>"><?= $download['format'] === 'DMG' ? 'Download for macOS' : 'Download ZIP' ?> <span aria-hidden="true">↓</span></a><span class="download-filename"><?= escape($download['name']) ?></span><?php if ($download['checksum']): ?><a href="<?= escape($download['checksum']) ?>">SHA-256 checksum</a><?php endif; ?></div>
 <?php endforeach; ?>
-<p class="download-caption">One download for Apple silicon and Intel Macs. minipro is installed separately.</p>
+</div>
+<p class="download-caption">Open the DMG and drag ZIFburn into Applications. For ZIP, extract the app and move it into Applications.</p>
 <?php elseif ($release): ?><p>The latest release has no Mac download attached yet.</p><a class="button" href="<?= escape($release['url']) ?>">View release on GitHub ↗</a>
 <?php elseif ($state['status'] === 'empty'): ?><p>The first stable download has not been published yet.</p><a class="button" href="<?= escape(ZIFBURN_REPOSITORY) ?>/releases">Browse GitHub releases ↗</a>
 <?php else: ?><p>We couldn’t check the latest download right now. You can still get ZIFburn directly from GitHub.</p><a class="button" href="<?= escape(ZIFBURN_REPOSITORY) ?>/releases">Browse GitHub releases ↗</a>

@@ -10,4 +10,16 @@
 /* One-page navigation, downloads and support. */
 nav{align-items:center}nav .nav-get{display:inline-flex;align-items:center;gap:12px;border:1px solid #8a9099;border-radius:4px;padding:9px 16px;color:var(--ink);white-space:nowrap}nav .nav-get:hover{border-color:var(--accent);color:var(--accent);background:#ffffff05}.download-section>h2{font-size:clamp(38px,5vw,64px);margin-bottom:20px}.download-heading h3{font-size:38px;margin:8px 0 4px;line-height:1.12;letter-spacing:-.045em}.setup-details{margin-top:32px}.setup-details .install,#build details .install{padding-top:12px}.section-copy{max-width:780px;color:var(--muted);margin-bottom:30px}.support-links{display:flex;gap:25px;flex-wrap:wrap;margin-top:30px;font-size:15px}.faq-list{padding:16px 0 0 22px}.faq-list summary{font-size:17px;font-weight:500}.setup-details p,.setup-details li,#build details p{color:var(--muted)}@media(max-width:760px){nav .nav-get{padding:7px 12px}.download-heading h3{font-size:29px}.faq-list{padding-left:12px}.support-links{gap:16px}nav{gap:12px 16px}}
 
-.download-action+.download-action{margin-top:18px}.button-secondary{background:transparent;color:var(--ink);border:1px solid var(--line)}.button-secondary:hover{background:#ffffff08;color:var(--accent)}
+/* Release downloads share aligned buttons and their own file details. */
+.download-options{display:flex;align-items:flex-start;gap:28px;flex-wrap:wrap}
+.download-options .download-action{display:flex;flex-direction:column;align-items:stretch;gap:10px;min-width:0}
+.download-options .button{display:flex;justify-content:space-between;gap:32px;min-height:56px;margin:0;box-sizing:border-box}
+.download-options .button-secondary{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.download-options .button-secondary:hover{background:#ffffff08;color:var(--accent);border-color:var(--accent)}
+.download-filename{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.download-options .download-action>a:not(.button){font-size:14px;color:var(--accent);align-self:flex-start;text-decoration:none}
+.download-options .download-action>a:not(.button):hover{text-decoration:underline}
+.download-panel .download-caption{margin-top:24px;font-size:15px;line-height:1.6}
+.download-panel .release-links a{color:var(--accent);text-decoration:none}
+.download-panel .release-links a:hover{text-decoration:underline}
+@media(max-width:600px){.download-options{flex-direction:column;gap:24px}.download-options .download-action{width:100%}.download-options .button{width:100%}}

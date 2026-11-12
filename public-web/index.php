@@ -16,7 +16,7 @@ function escape(string $value): string
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ZIFburn — Chip programming for macOS</title>
+<title>ZIFburn — EPROM tools for Mac</title>
 <meta name="description" content="A native macOS front-end for minipro. Read, program and verify chips with searchable device databases, a hex buffer, socket diagrams, bank-switched adapters and 13 themes.">
 <meta name="theme-color" content="#171c23"><link rel="icon" href="assets/icon.png"><link rel="stylesheet" href="style.css">
 </head>
@@ -28,7 +28,7 @@ function escape(string $value): string
 <?php endforeach; ?>
 </nav></header>
 <main id="main">
-<section class="hero"><p class="eyebrow">NATIVE macOS · MINIPRO FRONT-END · VERSION <?= escape($site['version']) ?></p><h1>Chip programming<br>for macOS.</h1><p class="intro">Read, program and verify your ROMs with a clear hex buffer, socket placement diagrams, and the minipro command behind every operation.</p><a class="button" href="#get">Get ZIFburn <span aria-hidden="true">↗</span></a><span class="requirements">macOS 14+ · Apple silicon &amp; Intel</span>
+<section class="hero"><p class="eyebrow">NATIVE macOS · MINIPRO FRONT-END · VERSION <?= escape($site['version']) ?></p><h1>EPROM tools<br>for Mac.</h1><p class="intro">Read, program and verify your ROMs with a clear hex buffer, socket placement diagrams, and the minipro command behind every operation.</p><a class="button" href="#get">Get ZIFburn <span aria-hidden="true">↗</span></a><span class="requirements">macOS 14+ · Apple silicon &amp; Intel</span>
 <figure><a href="assets/hex-buffer.jpg"><img src="assets/hex-buffer.jpg" alt="ZIFburn displaying a synthetic 64 KB image, checksums, a WS27C512L chip selection and socket placement diagram" width="2852" height="1650" fetchpriority="high"></a><figcaption>Hex, ASCII, checksums and socket placement in one window. Example image; no programmer connected.</figcaption></figure></section>
 <section id="workflow"><p class="eyebrow">FROM IMAGE TO SOCKET</p><h2>A familiar workflow.<br>With the details in view.</h2><div class="steps"><article><span class="number">01 / SELECT</span><h3>Find your chip.</h3><p>Search minipro’s device databases, keep favorites close, and inspect package, memory size and programming defaults before you start.</p></article><article><span class="number">02 / INSPECT</span><h3>Know your image.</h3><p>Inspect hex and ASCII, check CRC32 and Sum16, find byte patterns, compare files, and trim or pad the buffer.</p></article><article><span class="number">03 / PROGRAM</span><h3>Burn with context.</h3><p>Confirm before writing. Blank-check, write and verify unless verification is disabled; follow progress in the console and see the exact command to reproduce.</p></article></div></section>
 <section id="screenshots" class="gallery-section">

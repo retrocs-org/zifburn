@@ -22,5 +22,6 @@ spctl --assess --type execute --verbose=2 build/ZIFburn.app
 rm "$archive"
 ditto -c -k --sequesterRsrc --keepParent build/ZIFburn.app "$archive"
 shasum -a 256 "$archive" > "$archive.sha256"
+"${PYTHON:-python3}" scripts/dmg_release.py
 make dist
 echo "Release ready: $archive"

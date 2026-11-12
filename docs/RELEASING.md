@@ -172,14 +172,15 @@ object-storage download redirects need a specifically designed adapter.
 
 `outputs/artifacts/` contains:
 
+- `ZIFburn-<version>-macOS-universal.dmg`
 - `ZIFburn-<version>-macOS-universal.zip`
 - `zifburn-<version>-source.tar.gz`
 - `zifburn-<version>-website.tar.gz`
 - `BUILD-PROVENANCE.json`
 - `SHA256SUMS`
 
-Preparation copies the binary into `outputs/release/publish/` and creates its
-individual `.sha256` file. Only those two files are uploaded by default. GitHub
+Preparation copies the DMG and ZIP into `outputs/release/publish/` and creates
+an individual `.sha256` file for each. These four files are uploaded by default. GitHub
 and GitLab supply source downloads from the tagged commit. The standalone source
 archive, PHP website package, provenance and aggregate checksum inventory remain
 local build/validation artifacts. Publication does not deploy the PHP site.
@@ -224,3 +225,15 @@ repositories before production tags. No ordinary test publishes real releases.
 - [GitHub releases](https://docs.github.com/en/rest/releases/releases)
 - [GitLab generic packages](https://docs.gitlab.com/user/packages/generic_packages/)
 - [GitLab releases](https://docs.gitlab.com/api/releases/)
+
+## Disk images
+
+The build creates a universal ZIP and a drag-to-Applications DMG. Both the app and disk image are Developer ID signed, notarized and stapled. Publication includes both downloads and individual SHA256 checksum files. DMG verification mounts the image read-only and compares its app against the validated build.
+
+To add a DMG to an existing published release without changing its tag or ZIP:
+
+```sh
+python3 scripts/release.py add-dmg --tag 0.1 --to gitlab,github --confirm-publish
+```
+
+This uses the local `outputs/artifacts` ZIP only after comparing its hash with the published ZIP on every destination. It preserves release notes and existing assets, refuses conflicting DMG files, and records verification evidence under `outputs/dmg-<tag>/`. Omit `--confirm-publish` to prepare and verify without uploading. Keep the manifest and image together for retries.

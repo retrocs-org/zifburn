@@ -95,6 +95,7 @@ class ReleaseTests(unittest.TestCase):
             subprocess.run(args, cwd=self.root, check=True, capture_output=True)
         self.addCleanup(patch.stopall)
         patch('release.verify_macos', return_value=VALIDATION).start()
+        patch('release.verify_dmg', return_value={'signing': 'Developer ID', 'ticket_stapled': True, 'gatekeeper': 'accepted', 'app_matches': True}).start()
         patch('http.client.HTTPSConnection', side_effect=AssertionError('Real networking is forbidden in tests')).start()
         patch.dict(os.environ, {'GITHUB_TOKEN': 'mock-github-credential', 'GITLAB_TOKEN': 'mock-gitlab-credential'}).start()
         self.make_artifacts()
@@ -108,13 +109,14 @@ class ReleaseTests(unittest.TestCase):
         n = release.names(self.root)
         with ZipFile(folder / n['binary'], 'w') as archive:
             archive.write(app / 'ZIFburn', 'ZIFburn.app/Contents/MacOS/ZIFburn')
+        (folder / n['dmg']).write_bytes(b'disk image fixture')
         with tarfile.open(folder / n['website'], 'w:gz') as archive:
             for path in sorted((self.root / 'public-web').rglob('*')):
                 if path.is_file():
                     archive.add(path, arcname=str(path.relative_to(self.root / 'public-web')), recursive=False)
         record = {'version': '0.1', 'commit': provenance.commit(self.root),
-                  'source_sha256': provenance.source_hash(self.root), 'macos': VALIDATION,
-                  'artifacts': {n[k]: release.digest(folder / n[k]) for k in ('binary', 'website')}}
+                  'source_sha256': provenance.source_hash(self.root), 'macos': VALIDATION, 'dmg': release.verify_dmg(self.root),
+                  'artifacts': {n[k]: release.digest(folder / n[k]) for k in ('binary', 'dmg', 'website')}}
         provenance.write_json(folder / n['record'], record)
         source_release.create(folder / n['source'], self.root, (folder / n['record']).read_bytes())
         self.write_sums()
@@ -336,11 +338,64 @@ class ReleaseTests(unittest.TestCase):
         for value in ['', 'github,github', 'other', 'github,gitlab,']:
             with self.assertRaises(ValueError): release.destinations(value)
 
+    def extension_setup(self):
+        import release_dmg
+        manifest = dict(self.manifest(), tag='0.1')
+        apis = {s: FakeAPI(s, manifest) for s in release.SERVICES}
+        zipname = release.names(self.root)['binary']
+        sha = release.digest(release.output(self.root) / zipname)
+        for service, api in apis.items():
+            api.release = {'id': 7, 'tag_name': '0.1', 'draft': False, 'body': 'Keep notes',
+                'upload_url': 'https://uploads.github.com' + api.base + '/releases/7/assets{?name,label}',
+                'assets': {'links': []}}
+            if service == 'github':
+                api.assets[zipname] = {'name': zipname, 'digest': 'sha256:' + sha}
+            else:
+                package = release.package_path(api.base, manifest, zipname)
+                api.packages[package] = sha
+                api.release['assets']['links'] = [{'name': zipname, 'url': 'https://' + api.host + package}]
+        patch('release.API', side_effect=lambda host, token, github=False: apis['github' if github else 'gitlab']).start()
+        patch('release.remote_tag', return_value=manifest['commit']).start()
+        def fake_run(args, root, capture=False):
+            if args[:2] == ['git', 'rev-parse']: return manifest['commit']
+            if args[:2] == ['git', 'show']: return '0.1'
+            return provenance.run(args, root, capture)
+        patch('release_dmg.run', side_effect=fake_run).start()
+        patch('release_dmg.verify_app').start()
+        patch('release_dmg.verify_dmg', return_value={'accepted': True}).start()
+        def fake_build(app, image, identity, profile, v):
+            image.write_bytes(b'signed disk image fixture')
+            return {'accepted': True}
+        patch('release_dmg.build_dmg', side_effect=fake_build).start()
+        return release_dmg, apis, zipname
+
+    def test_add_dmg_preserves_existing_assets_notes_and_resumes(self):
+        module, apis, zipname = self.extension_setup()
+        with contextlib.redirect_stdout(io.StringIO()):
+            module.extend_release(self.config, '0.1', ['gitlab', 'github'], True, self.root)
+            before = {s: len([c for c in a.calls if c[0] in ('POST', 'PUT')]) for s, a in apis.items()}
+            module.extend_release(self.config, '0.1', ['gitlab', 'github'], True, self.root)
+        for service, api in apis.items():
+            self.assertEqual(api.release['body'], 'Keep notes')
+            self.assertEqual(before[service], len([c for c in api.calls if c[0] in ('POST', 'PUT')]))
+        self.assertIn(zipname, apis['github'].assets)
+        self.assertEqual(len(apis['github'].assets), 3)
+        self.assertEqual(len(apis['gitlab'].release['assets']['links']), 3)
+
+    def test_add_dmg_conflict_stops_all_remote_writes(self):
+        module, apis, _ = self.extension_setup()
+        name = release.names(self.root)['dmg']
+        apis['github'].assets[name] = {'name': name, 'digest': 'sha256:' + '0' * 64}
+        with self.assertRaisesRegex(ValueError, 'Conflicting GitHub'):
+            module.extend_release(self.config, '0.1', ['gitlab', 'github'], True, self.root)
+        self.assertFalse(any(c[0] != 'GET' for api in apis.values() for c in api.calls))
+
     def test_build_runs_all_targets_before_packaging(self):
         import shutil
         folder = release.output(self.root)
         n = release.names(self.root)
         binary, website = (folder / n['binary']).read_bytes(), (folder / n['website']).read_bytes()
+        dmg = (folder / n['dmg']).read_bytes()
         shutil.rmtree(self.root / 'outputs')
         commands = []
         def fake_run(args, root, capture=False, env=None):
@@ -350,6 +405,7 @@ class ReleaseTests(unittest.TestCase):
             if args == ['bash', 'scripts/release.sh']:
                 (root / 'build/release').mkdir(exist_ok=True)
                 (root / 'build/release' / n['binary']).write_bytes(binary)
+                (root / 'build/release' / n['dmg']).write_bytes(dmg)
             if args == ['swift', '--version']: return 'Swift test compiler'
         config = dict(self.config, env={'SIGN_IDENTITY':'Developer ID Application: Fixture'})
         with patch('release.run', side_effect=fake_run): release.build(config, self.root)
@@ -417,7 +473,7 @@ class ReleaseTests(unittest.TestCase):
     def test_publication_contains_only_binary_and_individual_checksum(self):
         manifest = self.manifest()
         binary = release.names(self.root)['binary']
-        self.assertEqual(set(manifest['files']), {binary, binary + '.sha256'})
+        self.assertEqual(set(manifest['files']), {binary, binary + '.sha256', release.names(self.root)['dmg'], release.names(self.root)['dmg'] + '.sha256'})
         self.assertEqual(set(manifest['inventory']), set(release.names(self.root).values()) | {'SHA256SUMS'})
         sidecar = (release.publication_folder(self.root)/(binary+'.sha256')).read_text()
         self.assertEqual(sidecar, release.digest(release.output(self.root)/binary)+'  '+binary+'\n')
@@ -457,6 +513,7 @@ class ReleaseTests(unittest.TestCase):
         import shutil
         folder=release.output(self.root); n=release.names(self.root)
         binary, website=(folder/n['binary']).read_bytes(),(folder/n['website']).read_bytes()
+        dmg=(folder/n['dmg']).read_bytes()
         shutil.rmtree(self.root/'outputs')
         observed=[]
         config=dict(self.config,env={'SIGN_IDENTITY':'Developer ID Application: Fixture',
@@ -471,6 +528,7 @@ class ReleaseTests(unittest.TestCase):
             if args==['bash','scripts/release.sh']:
                 (root/'build/release').mkdir(exist_ok=True)
                 (root/'build/release'/n['binary']).write_bytes(binary)
+                (root/'build/release'/n['dmg']).write_bytes(dmg)
             if args==['swift','--version']: return 'Swift fixture'
         with patch('release.run',side_effect=fake_run): release.build(config,self.root)
         self.assertEqual(observed[0][0],'/persistent/python')

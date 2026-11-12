@@ -22,7 +22,7 @@ function zifburn_release_payload(array $raw): ?array
     foreach ($raw['assets'] ?? [] as $asset) {
         if (!is_array($asset)) { continue; }
         $name = $asset['name'] ?? '';
-        if (!is_string($name) || !preg_match('/\AZIFburn-[A-Za-z0-9_.-]+-macOS-universal\.zip(?:\.sha256)?\z/', $name)
+        if (!is_string($name) || !preg_match('/\AZIFburn-[A-Za-z0-9_.-]+-macOS-universal\.(?:dmg|zip)(?:\.sha256)?\z/', $name)
             || ($asset['state'] ?? '') !== 'uploaded'
             || ($asset['browser_download_url'] ?? '') !== $base . rawurlencode($name)
             || isset($assets[$name]) || !is_int($asset['size'] ?? null) || $asset['size'] <= 0) {
@@ -32,11 +32,13 @@ function zifburn_release_payload(array $raw): ?array
     }
     $downloads = [];
     foreach ($assets as $name => $asset) {
-        if (str_ends_with($name, '.zip')) {
+        if (str_ends_with($name, '.zip') || str_ends_with($name, '.dmg')) {
+            $asset['format'] = str_ends_with($name, '.dmg') ? 'DMG' : 'ZIP';
             $asset['checksum'] = $assets[$name . '.sha256']['url'] ?? null;
             $downloads[] = $asset;
         }
     }
+    usort($downloads, static fn(array $a, array $b): int => ($a['format'] === 'DMG' ? 0 : 1) <=> ($b['format'] === 'DMG' ? 0 : 1));
     return ['tag' => $tag, 'published_at' => $raw['published_at'], 'downloads' => $downloads,
             'url' => ZIFBURN_REPOSITORY . '/releases/tag/' . rawurlencode($tag),
             'source' => ZIFBURN_REPOSITORY . '/archive/refs/tags/' . rawurlencode($tag) . '.zip'];

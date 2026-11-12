@@ -87,6 +87,7 @@ def git_destination(config, service):
 def names(root=ROOT):
     v = version(root)
     return {'binary': 'ZIFburn-' + v + '-macOS-universal.zip',
+            'dmg': 'ZIFburn-' + v + '-macOS-universal.dmg',
             'source': 'zifburn-' + v + '-source.tar.gz',
             'website': 'zifburn-' + v + '-website.tar.gz',
             'record': 'BUILD-PROVENANCE.json'}
@@ -131,6 +132,11 @@ def verify_macos(root=ROOT):
     run(['spctl', '--assess', '--type', 'execute', app], root, True)
     return {'signing': 'Developer ID', 'hardened_runtime': True,
             'ticket_stapled': True, 'gatekeeper': 'accepted', 'architectures': ['arm64', 'x86_64']}
+
+
+def verify_dmg(root=ROOT):
+    from dmg_release import verify_dmg as validate
+    return validate(output(root) / names(root)['dmg'], root / 'build/ZIFburn.app')
 
 
 def verify_binary(root=ROOT):
@@ -187,9 +193,10 @@ def check(root=ROOT):
     require(record.get('source_sha256') == source_hash(root), 'Source changed; rebuild release artifacts')
     require(record.get('version') == version(root), 'Build version differs from VERSION')
     require(record.get('commit') == commit(root), 'Build commit changed; rebuild release artifacts')
-    require(record.get('artifacts') == {names(root)[key]: files[names(root)[key]] for key in ('binary', 'website')},
+    require(record.get('artifacts') == {names(root)[key]: files[names(root)[key]] for key in ('binary', 'dmg', 'website')},
             'Build provenance differs from artifact hashes')
     require(record.get('macos') == verify_macos(root), 'Signing or notarization validation differs')
+    require(record.get('dmg') == verify_dmg(root), 'DMG validation differs from build provenance')
     verify_binary(root)
     verify_archives(root)
     return files
@@ -227,12 +234,13 @@ def build(config, root=ROOT):
     folder.mkdir(parents=True, exist_ok=True)
     require(not any(folder.iterdir()), 'Move old outputs/artifacts aside before rebuilding')
     n = names(root)
-    shutil.copyfile(root / 'build/release' / n['binary'], folder / n['binary'])
+    for kind in ('binary', 'dmg'):
+        shutil.copyfile(root / 'build/release' / n[kind], folder / n[kind])
     shutil.copyfile(root / 'build/zifburn-website.tar.gz', folder / n['website'])
     record = {'version': version(root), 'commit': revision, 'source_sha256': before,
-              'compiler': run(['swift', '--version'], root, True), 'macos': validation,
+              'compiler': run(['swift', '--version'], root, True), 'macos': validation, 'dmg': verify_dmg(root),
               'runtime_validation': 'Not established by build checks; complete hardware smoke tests separately.',
-              'artifacts': {n[k]: digest(folder / n[k]) for k in ('binary', 'website')}}
+              'artifacts': {n[k]: digest(folder / n[k]) for k in ('binary', 'dmg', 'website')}}
     write_json(folder / n['record'], record)
     create_source(folder / n['source'], root, (folder / n['record']).read_bytes())
     require(before == source_hash(root), 'Source changed during packaging')
@@ -242,10 +250,15 @@ def build(config, root=ROOT):
 
 
 def publication_assets(root=ROOT):
-    name = names(root)['binary']
-    sha = digest(output(root) / name)
-    sidecar = (sha + '  ' + name + '\n').encode()
-    return {name: sha, name + '.sha256': hashlib.sha256(sidecar).hexdigest()}, sidecar
+    files, sidecars = {}, {}
+    for kind in ('dmg', 'binary'):
+        name = names(root)[kind]
+        sha = digest(output(root) / name)
+        data = (sha + '  ' + name + '\n').encode()
+        files[name] = sha
+        files[name + '.sha256'] = hashlib.sha256(data).hexdigest()
+        sidecars[name + '.sha256'] = data
+    return files, sidecars
 
 
 def publication_folder(root=ROOT):
@@ -266,7 +279,7 @@ def verify_publication(manifest, root=ROOT):
 
 def prepare(config, notes, root=ROOT, tag=None, tag_message=None):
     inventory_files = check(root)
-    files, sidecar = publication_assets(root)
+    files, sidecars = publication_assets(root)
     tag = release_tag(tag, version(root))
     annotation = tag_message if tag_message is not None else 'ZIFburn ' + tag
     require(annotation.strip() and '\0' not in annotation, 'Invalid tag annotation')
@@ -291,7 +304,7 @@ def prepare(config, notes, root=ROOT, tag=None, tag_message=None):
     for name in files:
         require(not (folder / name).is_symlink(), 'Symlinked staged asset')
         if name.endswith('.sha256'):
-            (folder / name).write_bytes(sidecar)
+            (folder / name).write_bytes(sidecars[name])
         else:
             shutil.copyfile(output(root) / name, folder / name)
     verify_publication(manifest, root)
@@ -582,7 +595,7 @@ def destinations(value):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=('source', 'plan', 'build', 'check', 'prepare', 'publish', 'release'))
+    parser.add_argument('command', choices=('source', 'plan', 'build', 'check', 'prepare', 'publish', 'release', 'add-dmg'))
     parser.add_argument('--config', type=Path, default=default_config_path())
     parser.add_argument('--notes', type=Path, default=ROOT / 'docs/RELEASE-NOTES.md')
     parser.add_argument('--to', default='gitlab,github')
@@ -598,9 +611,9 @@ def main(argv=None):
         parser.error('--commit-message requires source --init')
     if (args.dry_run or args.initialize or args.confirm_push) and args.command != 'source':
         parser.error('--dry-run, --init and --confirm-push are for source only')
-    if args.confirm_publish and args.command not in ('publish', 'release'):
+    if args.confirm_publish and args.command not in ('publish', 'release', 'add-dmg'):
         parser.error('--confirm-publish is for publish/release only')
-    if (args.tag is not None or args.tag_message is not None) and args.command not in ('prepare', 'publish', 'release'):
+    if (args.tag is not None or args.tag_message is not None) and args.command not in ('prepare', 'publish', 'release', 'add-dmg'):
         parser.error('--tag and --tag-message are for prepare/publish/release')
     config = configuration(args.config)
     if args.command not in ('plan', 'check'):
@@ -612,6 +625,9 @@ def main(argv=None):
     elif args.command == 'source':
         push_source(config, destinations(args.to), git_destination, args.confirm_push, args.dry_run,
                     initialize=args.initialize, commit_message=args.commit_message)
+    elif args.command == 'add-dmg':
+        from release_dmg import extend_release
+        extend_release(config, args.tag or version(), destinations(args.to), args.confirm_publish)
     elif args.command in ('publish', 'release'):
         selected = destinations(args.to)
         require(args.confirm_publish, 'Review release settings, then add --confirm-publish; nothing uploaded')

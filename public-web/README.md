@@ -55,7 +55,7 @@ The `#get` section reads the public GitHub latest-release API for `retrocs-org/z
 Download and matching checksum links come from the returned release assets;
 future stable tags need no website edit. Drafts and prereleases are excluded.
 The release tag, date, source archive and release-notes links follow that release.
-Only uploaded Mac universal ZIP assets from the same repository and tag are shown.
+Only uploaded Mac universal DMG and ZIP assets from the same repository and tag are shown.
 
 Allow outbound HTTPS to `api.github.com`. PHP cURL is preferred; HTTPS streams
 with `allow_url_fopen` are supported as a fallback. No GitHub token is needed or
@@ -88,3 +88,5 @@ one Build from source section, and Support with an expandable FAQ. Navigation
 uses scrolling section links. The outlined Get ZIFburn menu button leads to
 `#get`. Changelog links point to GitHub releases. `get.php` redirects old download
 page links to `index.php#get`.
+
+The download section prefers a released DMG and also lists the ZIP alternative. Each download links to its own checksum when published. ZIP-only releases remain supported.

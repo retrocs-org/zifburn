@@ -16,6 +16,15 @@ try {
     $parsed = zifburn_release_payload($payload);
     check($parsed !== null && count($parsed['downloads']) === 1, 'Expected Mac download');
     check(str_ends_with($parsed['downloads'][0]['checksum'], '.zip.sha256'), 'Expected exact matching checksum');
+    $both = $payload;
+    foreach ($payload['assets'] as $asset) {
+        $asset['name'] = str_replace('.zip', '.dmg', $asset['name']);
+        $asset['browser_download_url'] = str_replace('.zip', '.dmg', $asset['browser_download_url']);
+        $both['assets'][] = $asset;
+    }
+    $downloads = zifburn_release_payload($both)['downloads'];
+    check(count($downloads) === 2 && $downloads[0]['format'] === 'DMG' && $downloads[1]['format'] === 'ZIP', 'DMG first with ZIP alternative');
+    check(str_ends_with($downloads[0]['checksum'], '.dmg.sha256'), 'DMG checksum matches image');
     foreach (['draft', 'prerelease'] as $field) {
         $bad = $payload; $bad[$field] = true;
         check(zifburn_release_payload($bad) === null, 'Excluded unpublished/prerelease');

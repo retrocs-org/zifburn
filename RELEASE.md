@@ -78,8 +78,8 @@ Run `make website-check` to lint PHP and validate rendered HTML, then
 `make website-package` to create the deployable archive in `build/`. See
 `public-web/README.md` for server configuration. GitHub Pages cannot execute PHP.
 
-After uploading a signed and notarized binary release, add its download and
-SHA-256 checksum links to the website’s Get started section. Keep screenshot
+The website’s Get section automatically lists the latest stable GitHub release,
+preferring DMG and retaining ZIP with their SHA-256 checksums. Keep screenshot
 captions and format support in sync with the app.
 
 ## Release checklist
@@ -87,5 +87,5 @@ captions and format support in sync with the app.
 - Run tests, build the universal app and validate website assets.
 - Complete the hardware smoke test on the supported Mac architectures.
 - Sign, notarize, staple and validate the release app.
-- Publish the ZIP, checksum, source archive and release notes.
+- Publish the DMG, ZIP, individual checksums and release notes. Tagged source downloads are provided by GitHub and GitLab.
 - Update the website’s version, screenshots and download links.
